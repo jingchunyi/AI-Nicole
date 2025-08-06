@@ -597,6 +597,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 删除群组功能
+    async function deleteGroup() {
+        if (!currentGroup) return;
+        
+        if (!confirm(`确定要删除群组"${currentGroup.name}"吗？此操作不可撤销，将删除群组及其所有聊天记录。`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/groups/${currentGroup.id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                // 重新加载群组列表
+                await loadGroups();
+                
+                // 清空聊天区域并显示欢迎屏幕
+                currentGroup = null;
+                currentTopic = null;
+                document.getElementById('chat-messages').innerHTML = '';
+                document.getElementById('group-header').classList.add('hidden');
+                document.getElementById('input-area').classList.add('hidden');
+                showWelcomeScreen();
+                
+                alert('群组删除成功');
+            } else {
+                const error = await response.json();
+                alert(error.error || '删除失败');
+            }
+        } catch (error) {
+            console.error('删除群组失败:', error);
+            alert('删除群组失败，请重试');
+        }
+    }
+
+    // 删除群组按钮事件
+    document.getElementById('delete-group-btn').addEventListener('click', deleteGroup);
+
     // 初始化
     showWelcomeScreen();
     loadGroups();

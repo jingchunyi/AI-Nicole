@@ -633,6 +633,31 @@ def update_topic(topic_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/topics/<topic_id>', methods=['DELETE'])
+def delete_topic(topic_id):
+    """删除话题"""
+    try:
+        # 查找话题
+        topic = Topic.query.get(topic_id)
+        if not topic:
+            return jsonify({"error": "话题不存在"}), 404
+        
+        # 删除相关的对话记录
+        Conversation.query.filter_by(topic_id=topic_id).delete()
+        
+        # 删除话题
+        db.session.delete(topic)
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "message": "话题删除成功"
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 # 助手管理API
 @app.route('/api/assistants', methods=['GET'])
 def get_assistants():
@@ -922,6 +947,36 @@ def update_group(group_id):
                 "updated_at": group.updated_at.isoformat(),
                 "assistants": assistants_data
             }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/groups/<int:group_id>', methods=['DELETE'])
+def delete_group(group_id):
+    """删除群组"""
+    try:
+        # 查找群组
+        group = Group.query.get(group_id)
+        if not group:
+            return jsonify({"error": "群组不存在"}), 404
+        
+        # 查找并删除群组对应的话题
+        group_topic = Topic.query.filter_by(title=f"群组:{group.name}", role='group').first()
+        if group_topic:
+            # 删除话题相关的对话记录
+            Conversation.query.filter_by(topic_id=group_topic.id).delete()
+            # 删除话题
+            db.session.delete(group_topic)
+        
+        # 删除群组
+        db.session.delete(group)
+        db.session.commit()
+        
+        return jsonify({
+            "status": "success",
+            "message": "群组删除成功"
         })
         
     except Exception as e:

@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>运营智囊团 - 设置</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100" style="background-color: #F5F1EA !important;">
     <div class="flex h-screen">
         <!-- 左侧边栏 -->
         <div class="w-64 bg-white shadow-lg">
@@ -15,7 +16,7 @@
                 <a href="/" class="flex-1 px-4 py-2 text-gray-500">助手</a>
                 <a href="/topics" class="flex-1 px-4 py-2 text-gray-500">话题</a>
                 <a href="/groups" class="flex-1 px-4 py-2 text-gray-500 hover:text-gray-700">群组</a>
-                <a href="/settings" class="flex-1 px-4 py-2 text-green-600 border-b-2 border-green-600">设置</a>
+                <a href="/settings" class="flex-1 px-4 py-2 text-warm-yellow border-b-2 border-warm-yellow">设置</a>
             </div>
         </div>
 
@@ -69,14 +70,20 @@
                             <div class="space-y-4">
                                 <textarea id="test-input" class="w-full p-2 border rounded-md" rows="3" 
                                           placeholder="在这里输入测试文本..."></textarea>
+                                <div class="flex justify-end">
+                                    <button type="button" onclick="testAPI('aliyun')" 
+                                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                        测试 API
+                                    </button>
+                                </div>
                                 <div id="test-result" class="hidden p-4 rounded-md bg-gray-100">
                                     <pre class="whitespace-pre-wrap"></pre>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex justify-end">
-                            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                        <div class="flex justify-end mt-6">
+                            <button type="submit" class="bg-warm-yellow text-white px-6 py-2 rounded-md bg-warm-yellow-hover btn-animate" style="background-color: #FFD166 !important;">
                                 保存所有设置
                             </button>
                         </div>
@@ -92,8 +99,8 @@
             const messageP = statusDiv.querySelector('p');
             
             statusDiv.classList.remove('hidden');
-            statusDiv.querySelector('div').className = `p-4 rounded-md ${isError ? 'bg-red-50' : 'bg-green-50'}`;
-            messageP.className = `text-sm ${isError ? 'text-red-700' : 'text-green-700'}`;
+                            statusDiv.querySelector('div').className = `p-4 rounded-md ${isError ? 'bg-red-50' : 'bg-warm-yellow-50'}`;
+            messageP.className = `text-sm ${isError ? 'text-red-700' : 'text-warm-yellow-700'}`;
             messageP.textContent = message;
             
             setTimeout(() => {
@@ -133,7 +140,7 @@
                 testResult.classList.remove('hidden');
                 if (response.ok) {
                     resultPre.textContent = JSON.stringify(data, null, 2);
-                    resultPre.className = 'whitespace-pre-wrap text-green-700';
+                    resultPre.className = 'whitespace-pre-wrap text-warm-yellow-700';
                 } else {
                     resultPre.textContent = `测试失败：${data.error || '未知错误'}`;
                     resultPre.className = 'whitespace-pre-wrap text-red-700';

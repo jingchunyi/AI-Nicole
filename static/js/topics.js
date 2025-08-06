@@ -8,7 +8,7 @@ let topics = [];
 let currentTopicId = null;
 let currentRole = 'operation_expert';
 let currentController = null; // 用于控制请求中断
-let selectedFiles = []; // 存储选中的文件
+// 文件功能已移除
 const sessionId = generateSessionId();
 
 // 角色映射
@@ -448,131 +448,7 @@ async function saveCompleteAIResponse(content) {
     }
 }
 
-// 文件上传相关函数
-function openFileDialog() {
-    document.getElementById('file-input').click();
-}
-
-function handleFileSelect(event) {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
-    
-    // 添加到已选文件列表
-    selectedFiles.push(...files);
-    
-    // 更新文件预览
-    updateFilePreview();
-    
-    // 清空input以允许重复选择同一文件
-    event.target.value = '';
-}
-
-function updateFilePreview() {
-    const filePreview = document.getElementById('file-preview');
-    const fileList = document.getElementById('file-list');
-    
-    if (selectedFiles.length === 0) {
-        filePreview.classList.add('hidden');
-        return;
-    }
-    
-    filePreview.classList.remove('hidden');
-    fileList.innerHTML = '';
-    
-    selectedFiles.forEach((file, index) => {
-        const fileItem = document.createElement('div');
-        fileItem.className = 'flex items-center justify-between p-2 bg-white rounded border';
-        
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'flex items-center';
-        
-        const fileIcon = getFileIcon(file.type, file.name);
-        const fileName = file.name.length > 30 ? file.name.substring(0, 30) + '...' : file.name;
-        const fileSize = formatFileSize(file.size);
-        
-        fileInfo.innerHTML = `
-            <span class="text-2xl mr-3">${fileIcon}</span>
-            <div>
-                <div class="text-sm font-medium text-gray-900">${fileName}</div>
-                <div class="text-xs text-gray-500">${fileSize}</div>
-            </div>
-        `;
-        
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'text-red-500 hover:text-red-700 p-1';
-        removeBtn.innerHTML = `
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        `;
-        removeBtn.onclick = () => removeFile(index);
-        
-        fileItem.appendChild(fileInfo);
-        fileItem.appendChild(removeBtn);
-        fileList.appendChild(fileItem);
-    });
-}
-
-function getFileIcon(fileType, fileName) {
-    const extension = fileName.split('.').pop().toLowerCase();
-    
-    if (fileType.startsWith('image/')) return '🖼️';
-    if (fileType.includes('pdf') || extension === 'pdf') return '📄';
-    if (fileType.includes('word') || ['doc', 'docx'].includes(extension)) return '📝';
-    if (fileType.includes('text') || extension === 'txt') return '📄';
-    if (fileType.includes('excel') || ['xls', 'xlsx'].includes(extension)) return '📊';
-    if (fileType.includes('powerpoint') || ['ppt', 'pptx'].includes(extension)) return '📊';
-    
-    return '📎';
-}
-
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-function removeFile(index) {
-    selectedFiles.splice(index, 1);
-    updateFilePreview();
-}
-
-function clearAllFiles() {
-    selectedFiles = [];
-    updateFilePreview();
-}
-
-// 上传文件到服务器
-async function uploadFiles(files) {
-    if (files.length === 0) return [];
-    
-    const formData = new FormData();
-    files.forEach((file, index) => {
-        formData.append(`file_${index}`, file);
-    });
-    formData.append('topic_id', currentTopicId);
-    formData.append('session_id', sessionId);
-    
-    try {
-        const response = await fetch('/api/upload-files', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            return result.file_urls || [];
-        } else {
-            throw new Error('文件上传失败');
-        }
-    } catch (error) {
-        console.error('文件上传失败:', error);
-        alert('文件上传失败，请重试');
-        return [];
-    }
-}
+// 文件功能已移除
 
 // 编辑话题标题相关函数
 let editingTopicId = null;
@@ -662,6 +538,50 @@ async function saveTopicTitle() {
     }
 }
 
+// 删除话题
+async function deleteTopic() {
+    if (!currentTopicId) return;
+    
+    const topic = topics.find(t => t.id === currentTopicId);
+    if (!topic) return;
+    
+    if (!confirm(`确定要删除话题"${topic.title}"吗？此操作不可撤销。`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/topics/${currentTopicId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // 从本地topics数组中移除
+            const topicIndex = topics.findIndex(t => t.id === currentTopicId);
+            if (topicIndex !== -1) {
+                topics.splice(topicIndex, 1);
+            }
+            
+            // 重新渲染话题列表
+            renderTopics();
+            
+            // 清空聊天区域并显示欢迎屏幕
+            currentTopicId = null;
+            document.getElementById('chat-messages').innerHTML = '';
+            document.getElementById('topic-header').classList.add('hidden');
+            document.getElementById('input-area').classList.add('hidden');
+            showWelcomeScreen();
+            
+            alert('话题删除成功');
+        } else {
+            const error = await response.json();
+            alert(error.error || '删除失败');
+        }
+    } catch (error) {
+        console.error('删除话题失败:', error);
+        alert('删除话题失败，请重试');
+    }
+}
+
 // 发送消息
 async function sendMessage() {
     if (!currentTopicId) {
@@ -674,8 +594,8 @@ async function sendMessage() {
     const stopButton = document.getElementById('stop-button');
     const message = messageInput.value.trim();
     
-    if (!message && selectedFiles.length === 0) {
-        alert('请输入消息或选择文件');
+    if (!message) {
+        alert('请输入消息');
         return;
     }
 
@@ -684,30 +604,8 @@ async function sendMessage() {
     sendButton.disabled = true;
     stopButton.classList.remove('hidden');
 
-    // 先上传文件（如果有的话）
-    let fileUrls = [];
-    if (selectedFiles.length > 0) {
-        try {
-            fileUrls = await uploadFiles(selectedFiles);
-        } catch (error) {
-            console.error('文件上传失败:', error);
-            // 重新启用按钮
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            stopButton.classList.add('hidden');
-            return;
-        }
-    }
-
-    // 构建完整的消息内容（包含文件信息）
-    let fullMessage = message;
-    if (fileUrls.length > 0) {
-        const fileInfo = fileUrls.map(url => `[文件: ${url.split('/').pop()}]`).join('\n');
-        fullMessage = message ? `${message}\n\n${fileInfo}` : fileInfo;
-    }
-
     // 添加用户消息到界面
-    addMessage('user', fullMessage);
+    addMessage('user', message);
 
     // 添加思考动画
     const chatMessages = document.getElementById('chat-messages');
@@ -803,10 +701,8 @@ async function sendMessage() {
             aiMessageContent.innerHTML = '<p class="text-red-500">发送消息失败，请重试</p>';
         }
     } finally {
-        // 清理全局变量和文件
+        // 清理全局变量
         window.currentAIResponse = '';
-        selectedFiles = [];
-        updateFilePreview();
         
         // 重新启用输入和发送按钮，隐藏停止按钮
         currentController = null;
@@ -900,16 +796,16 @@ document.addEventListener('DOMContentLoaded', function() {
     sendButton.addEventListener('click', sendMessage);
     stopButton.addEventListener('click', stopAIResponse);
     
-    // 文件上传相关事件
-    document.getElementById('attach-file-btn').addEventListener('click', openFileDialog);
-    document.getElementById('file-input').addEventListener('change', handleFileSelect);
-    document.getElementById('clear-files').addEventListener('click', clearAllFiles);
+    // 文件功能已移除
     
     // 编辑话题标题相关事件
     document.getElementById('edit-topic-title-btn').addEventListener('click', showEditTopicTitleModal);
     document.getElementById('close-edit-title-modal').addEventListener('click', hideEditTopicTitleModal);
     document.getElementById('cancel-edit-title').addEventListener('click', hideEditTopicTitleModal);
     document.getElementById('save-title-btn').addEventListener('click', saveTopicTitle);
+    
+    // 删除话题事件
+    document.getElementById('delete-topic-btn').addEventListener('click', deleteTopic);
     
     // 编辑标题模态框键盘事件
     document.getElementById('edit-title-input').addEventListener('keypress', function(e) {

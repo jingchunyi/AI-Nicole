@@ -1,3 +1,67 @@
+/* 全局样式变量和基础设置 */
+:root {
+    --oat-color: #F5F1EA;
+    --oat-light: #FAF7F2;
+    --oat-dark: #E8E2D6;
+    --glass-bg: rgba(245, 241, 234, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --glass-backdrop: blur(12px);
+}
+
+/* 玻璃效果基础样式 */
+.glass-effect {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+/* 聊天消息容器玻璃效果 */
+.chat-messages {
+    background: var(--oat-color) !important;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+}
+
+/* 消息气泡玻璃效果 */
+.message-bubble {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 用户消息气泡 */
+.user-message {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* AI消息气泡 */
+.ai-message {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* 输入区域玻璃效果 */
+.input-area-glass {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border-top: 1px solid var(--glass-border) !important;
+}
+
+/* 侧边栏玻璃效果 */
+.sidebar-glass {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-right: 1px solid var(--glass-border);
+}
+
 /* 思考动画样式 */
 .thinking-animation {
     animation: fadeInUp 0.3s ease-out;
@@ -32,21 +96,21 @@
 
 /* AI响应格式化样式 */
 .ai-response h1, .ai-response h2, .ai-response h3 {
-    border-left: 4px solid #10b981;
+    border-left: 4px solid #FFD166;
     padding-left: 12px;
     margin-left: -16px;
 }
 
 .ai-response h1 {
-    border-color: #059669;
+    border-color: #E6B800;
 }
 
 .ai-response h2 {
-    border-color: #10b981;
+    border-color: #FFD166;
 }
 
 .ai-response h3 {
-    border-color: #34d399;
+    border-color: #FFDD80;
 }
 
 /* 列表项样式 */
@@ -115,12 +179,12 @@
 
 /* 链接样式 */
 .ai-response a {
-    color: #10b981;
+    color: #FFD166;
     text-decoration: underline;
 }
 
 .ai-response a:hover {
-    color: #059669;
+    color: #E6B800;
 }
 
 /* 分隔线样式 */
@@ -186,6 +250,179 @@
 /* 输入框聚焦效果 */
 .input-focus:focus {
     ring: 2px;
-    ring-color: #10b981;
+    ring-color: #FFD166;
     ring-opacity: 0.5;
+}
+
+/* 增强的按钮动画和玻璃效果 */
+.btn-animate {
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.btn-animate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* 暖黄色按钮玻璃效果 */
+.btn-green-glass {
+    background: rgba(255, 209, 102, 0.8) !important;
+    border: 1px solid rgba(255, 209, 102, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-green-glass:hover {
+    background: rgba(255, 209, 102, 0.9) !important;
+    border: 1px solid rgba(255, 209, 102, 0.6);
+}
+
+/* 红色按钮玻璃效果 */
+.btn-red-glass {
+    background: rgba(220, 38, 38, 0.8) !important;
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-red-glass:hover {
+    background: rgba(220, 38, 38, 0.9) !important;
+    border: 1px solid rgba(220, 38, 38, 0.6);
+}
+
+/* 蓝色按钮玻璃效果 */
+.btn-blue-glass {
+    background: rgba(59, 130, 246, 0.8) !important;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-blue-glass:hover {
+    background: rgba(59, 130, 246, 0.9) !important;
+    border: 1px solid rgba(59, 130, 246, 0.6);
+}
+
+/* 输入框玻璃样式增强 */
+.input-glass {
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+}
+
+.input-glass:focus {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(255, 209, 102, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.1);
+}
+
+/* 模态框玻璃效果 */
+.modal-glass {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+/* 欢迎屏幕玻璃效果 */
+.welcome-glass {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem;
+}
+
+/* 群组头像堆叠玻璃效果 */
+.avatar-glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+/* 侧边栏项目悬停效果 */
+.sidebar-item-hover {
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.sidebar-item-hover:hover {
+    background: rgba(255, 209, 102, 0.1) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 209, 102, 0.2);
+    border-radius: 8px;
+}
+
+/* 确保标签栏正确布局 */
+.flex.border-b {
+    display: flex !important;
+    flex-direction: row !important;
+}
+
+.flex.border-b a {
+    flex: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    writing-mode: horizontal-tb !important;
+}
+
+/* 暖黄色主题样式 */
+.bg-warm-yellow {
+    background-color: #FFD166 !important;
+}
+
+.bg-warm-yellow-hover:hover {
+    background-color: #E6B800 !important;
+}
+
+.text-warm-yellow {
+    color: #FFD166 !important;
+}
+
+.text-warm-yellow-hover:hover {
+    color: #E6B800 !important;
+}
+
+.border-warm-yellow {
+    border-color: #FFD166 !important;
+}
+
+.ring-warm-yellow {
+    --tw-ring-color: #FFD166 !important;
+}
+
+.focus\:ring-warm-yellow:focus {
+    --tw-ring-color: #FFD166 !important;
+}
+
+.focus\:border-warm-yellow:focus {
+    border-color: #FFD166 !important;
+}
+
+.bg-warm-yellow-50 {
+    background-color: #FFF5CC !important;
+}
+
+.text-warm-yellow-700 {
+    color: #B8860B !important;
+}
+
+.text-warm-yellow-800 {
+    color: #996F00 !important;
+}
+
+.text-warm-yellow-500 {
+    color: #FFD166 !important;
 }
