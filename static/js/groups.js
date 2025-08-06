@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTopic = null;
     let eventSource = null;
     let sessionId = `session_${new Date().getTime()}`;
-    let currentReader = null; // 用于存储当前的流式读取器，以便停止时中断
 
     async function loadAssistants() {
         try {
@@ -221,24 +220,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 使用与topics.js相同的流式响应处理方式
-            currentReader = response.body.getReader();
+            const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
             while (true) {
-                let value, done;
-                try {
-                    const result = await currentReader.read();
-                    value = result.value;
-                    done = result.done;
-                    if (done) break;
-                } catch (error) {
-                    // 如果是用户主动停止，不需要显示错误
-                    if (error.message && error.message.includes('stopped')) {
-                        console.log('User stopped the stream');
-                        break;
-                    }
-                    throw error; // 其他错误重新抛出
-                }
+                const { value, done } = await reader.read();
+                if (done) break;
                 
                 const text = decoder.decode(value);
                 const lines = text.split('\n');
@@ -325,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
             messageInput.disabled = false;
             sendButton.disabled = false;
             stopButton.classList.add('hidden');
-            currentReader = null; // 清空reader引用
         }
     }
 
@@ -411,34 +397,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     stopButton.addEventListener('click', () => {
-        // 停止EventSource连接（如果有的话）
         if (eventSource) {
             eventSource.close();
         }
-        
-        // 停止当前的流式读取
-        if (currentReader) {
-            currentReader.cancel('User stopped the generation');
-            currentReader = null;
-        }
-        
-        // 恢复界面状态
-        messageInput.disabled = false;
         sendButton.disabled = false;
         stopButton.classList.add('hidden');
-        
-        // 显示停止消息
-        const stopMessage = document.createElement('div');
-        stopMessage.className = 'mb-4';
-        stopMessage.innerHTML = `
-            <div class="flex items-center justify-center">
-                <div class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
-                    🛑 用户已停止AI回复
-                </div>
-            </div>
-        `;
-        chatMessages.appendChild(stopMessage);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
     });
 
     // 初始化

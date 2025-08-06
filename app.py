@@ -1070,9 +1070,8 @@ def group_chat():
                             continue
 
                         assistant_response_content = ""
-                        try:
-                            for line in response.iter_lines():
-                                if line:
+                        for line in response.iter_lines():
+                            if line:
                                 line = line.decode('utf-8')
                                 if line.startswith('data: '):
                                     line_data = line[6:].strip()
@@ -1096,10 +1095,6 @@ def group_chat():
                                     except json.JSONDecodeError as e:
                                         print(f"JSON decode error: {e}, line_data: {line_data}")
                                         continue
-                        except Exception as stream_error:
-                            print(f"Stream interrupted for {assistant_data['name']}: {stream_error}")
-                            # 连接被中断，停止当前助手的处理
-                            break
 
                         # 保存助手回复到数据库
                         if assistant_response_content.strip():
