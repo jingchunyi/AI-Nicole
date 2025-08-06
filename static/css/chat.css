@@ -1,0 +1,191 @@
+/* 思考动画样式 */
+.thinking-animation {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 消息动画 */
+.message-fade-in {
+    animation: messageSlideIn 0.4s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* AI响应格式化样式 */
+.ai-response h1, .ai-response h2, .ai-response h3 {
+    border-left: 4px solid #10b981;
+    padding-left: 12px;
+    margin-left: -16px;
+}
+
+.ai-response h1 {
+    border-color: #059669;
+}
+
+.ai-response h2 {
+    border-color: #10b981;
+}
+
+.ai-response h3 {
+    border-color: #34d399;
+}
+
+/* 列表项样式 */
+.ai-response .list-item {
+    transition: background-color 0.2s ease;
+}
+
+.ai-response .list-item:hover {
+    background-color: #f0fdf4;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: -4px -8px;
+}
+
+/* 代码块样式 */
+.ai-response code {
+    background-color: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875em;
+}
+
+.ai-response pre {
+    background-color: #1f2937;
+    color: #f9fafb;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+}
+
+.ai-response pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+/* 引用样式 */
+.ai-response blockquote {
+    border-left: 4px solid #d1d5db;
+    padding-left: 16px;
+    margin: 16px 0;
+    font-style: italic;
+    color: #6b7280;
+}
+
+/* 表格样式 */
+.ai-response table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+}
+
+.ai-response th,
+.ai-response td {
+    border: 1px solid #e5e7eb;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.ai-response th {
+    background-color: #f9fafb;
+    font-weight: 600;
+}
+
+/* 链接样式 */
+.ai-response a {
+    color: #10b981;
+    text-decoration: underline;
+}
+
+.ai-response a:hover {
+    color: #059669;
+}
+
+/* 分隔线样式 */
+.ai-response hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #d1d5db, transparent);
+    margin: 24px 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .ai-response {
+        font-size: 14px;
+    }
+    
+    .ai-response h1 {
+        font-size: 1.5rem;
+    }
+    
+    .ai-response h2 {
+        font-size: 1.25rem;
+    }
+    
+    .ai-response h3 {
+        font-size: 1.125rem;
+    }
+}
+
+/* 滚动条样式 */
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 按钮动画 */
+.btn-animate {
+    transition: all 0.2s ease;
+}
+
+.btn-animate:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-animate:active {
+    transform: translateY(0);
+}
+
+/* 输入框聚焦效果 */
+.input-focus:focus {
+    ring: 2px;
+    ring-color: #10b981;
+    ring-opacity: 0.5;
+}

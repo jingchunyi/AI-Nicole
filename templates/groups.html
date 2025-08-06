@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运营智囊团 - 群组</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- 左侧边栏 -->
+        <div class="w-64 bg-white shadow-lg">
+            <!-- 顶部标签栏 -->
+            <div class="flex border-b">
+                <a href="/" class="flex-1 px-4 py-2 text-gray-500 hover:text-gray-700">助手</a>
+                <a href="/topics" class="flex-1 px-4 py-2 text-gray-500 hover:text-gray-700">话题</a>
+                <a href="/groups" class="flex-1 px-4 py-2 text-green-600 border-b-2 border-green-600">群组</a>
+                <a href="/settings" class="flex-1 px-4 py-2 text-gray-500 hover:text-gray-700">设置</a>
+            </div>
+            
+            <!-- 群组列表 -->
+            <div class="p-4">
+                <div class="mb-4">
+                    <button id="new-group-btn" class="w-full flex items-center justify-center p-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <span class="text-xl mr-2">➕</span>
+                        <span>新建群组</span>
+                    </button>
+                </div>
+                
+                <div id="groups-list" class="space-y-2">
+                    <!-- 群组列表将通过JavaScript动态添加 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="flex-1 flex flex-col">
+            <!-- 群组标题栏 -->
+            <div id="group-header" class="bg-white border-b p-4 hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <div id="group-avatar-stack" class="flex -space-x-2 mr-3">
+                                <!-- 群组成员头像将在这里显示 -->
+                            </div>
+                            <div>
+                                <h2 id="group-title" class="text-xl font-semibold text-gray-800"></h2>
+                                <p id="group-description" class="text-sm text-gray-600 mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 聊天记录 -->
+            <div class="flex-1 p-6 overflow-y-auto chat-messages" id="chat-messages">
+                <div id="welcome-screen" class="text-center text-gray-500 mt-20">
+                    <h2 class="text-2xl font-semibold mb-4">选择或创建一个群组</h2>
+                    <p>在左侧选择现有群组，或点击"新建群组"开始群组对话</p>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div id="input-area" class="p-4 bg-white border-t hidden">
+                <div class="bg-gray-100 rounded-lg p-4">
+                    <textarea id="message-input" class="w-full bg-transparent border-none resize-none focus:outline-none input-focus" 
+                              placeholder="在这里输入消息，按 Enter 发送..." rows="3"></textarea>
+                    <div class="flex justify-between items-center mt-2">
+                        <div class="flex space-x-2">
+                            <!-- 可以在这里添加更多按钮 -->
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="stop-button" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 btn-animate hidden">
+                                停止
+                            </button>
+                            <button id="send-button" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 btn-animate">
+                                发送
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建群组模态框 -->
+    <div id="new-group-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-lg">
+            <h3 class="text-xl font-semibold mb-4">新建群组</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">群组名称</label>
+                    <input type="text" id="group-name-input" class="w-full p-2 border rounded-md" placeholder="输入群组名称">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">群组描述</label>
+                    <textarea id="group-description-input" class="w-full p-2 border rounded-md" rows="3" placeholder="输入群组描述（可选）"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">选择助教</label>
+                    <div id="assistant-checkbox-list" class="space-y-2 max-h-60 overflow-y-auto border rounded-md p-2">
+                        <!-- 助手列表将通过JS动态加载 -->
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="cancel-group-btn" class="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50">
+                    取消
+                </button>
+                <button id="create-group-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    创建群组
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/groups.js') }}"></script>
+</body>
+</html>

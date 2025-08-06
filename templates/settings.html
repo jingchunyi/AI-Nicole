@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运营智囊团 - 设置</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- 左侧边栏 -->
+        <div class="w-64 bg-white shadow-lg">
+            <!-- 顶部标签栏 -->
+            <div class="flex border-b">
+                <a href="/" class="flex-1 px-4 py-2 text-gray-500">助手</a>
+                <a href="/topics" class="flex-1 px-4 py-2 text-gray-500">话题</a>
+                <a href="/groups" class="flex-1 px-4 py-2 text-gray-500 hover:text-gray-700">群组</a>
+                <a href="/settings" class="flex-1 px-4 py-2 text-green-600 border-b-2 border-green-600">设置</a>
+            </div>
+        </div>
+
+        <!-- 主设置区域 -->
+        <div class="flex-1 p-8 overflow-y-auto">
+            <div class="max-w-2xl mx-auto space-y-6">
+                <!-- API设置卡片 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold mb-6">API 设置</h2>
+                    
+                    <!-- 状态消息 -->
+                    <div id="status-message" class="mb-4 hidden">
+                        <div class="p-4 rounded-md">
+                            <p class="text-sm"></p>
+                        </div>
+                    </div>
+
+                    <form id="api-settings-form" class="space-y-6">
+                        <!-- 阿里云API设置 -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">阿里云通义千问</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">API密钥</label>
+                                    <div class="flex gap-2">
+                                        <input type="password" id="aliyun-api-key" name="aliyun_api_key" 
+                                               class="flex-1 p-2 border rounded-md" 
+                                               value="sk-044b96708e89453787a9033ab9c6bf33">
+                                        <button type="button" onclick="testAPI('aliyun')" 
+                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                                            测试
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">默认模型</label>
+                                    <select id="aliyun-model" name="aliyun_model" class="w-full p-2 border rounded-md">
+                                        <option value="qwen-plus">通义千问 Plus</option>
+                                        <option value="qwen-max">通义千问 Max</option>
+                                        <option value="qwen-1.5">通义千问 1.5</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 硅基API设置 -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">硅基API</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">API密钥</label>
+                                    <div class="flex gap-2">
+                                        <input type="password" id="guiji-api-key" name="guiji_api_key" 
+                                               class="flex-1 p-2 border rounded-md" 
+                                               value="sk-bbkkyosdmrmefanavzozynuiitttznnqyeaeigstehknjtyo">
+                                        <button type="button" onclick="testAPI('guiji')" 
+                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                                            测试
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Google Custom Search API设置 -->
+                        <div class="border-b pb-6">
+                            <h3 class="text-lg font-semibold mb-4">Google Custom Search API</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">API密钥</label>
+                                    <div class="flex gap-2">
+                                        <input type="password" id="google-api-key" name="google_api_key" 
+                                               class="flex-1 p-2 border rounded-md" 
+                                               value="AIzaSyChFtVe6nPHW5nT9J6i8QBXbka5LJVKVko">
+                                        <button type="button" onclick="testAPI('google')" 
+                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                                            测试
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API测试区域 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4">API 测试</h3>
+                            <div class="space-y-4">
+                                <textarea id="test-input" class="w-full p-2 border rounded-md" rows="3" 
+                                          placeholder="在这里输入测试文本..."></textarea>
+                                <div id="test-result" class="hidden p-4 rounded-md bg-gray-100">
+                                    <pre class="whitespace-pre-wrap"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                                保存所有设置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(message, isError = false) {
+            const statusDiv = document.getElementById('status-message');
+            const messageP = statusDiv.querySelector('p');
+            
+            statusDiv.classList.remove('hidden');
+            statusDiv.querySelector('div').className = `p-4 rounded-md ${isError ? 'bg-red-50' : 'bg-green-50'}`;
+            messageP.className = `text-sm ${isError ? 'text-red-700' : 'text-green-700'}`;
+            messageP.textContent = message;
+            
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        async function testAPI(provider) {
+            const testInput = document.getElementById('test-input').value.trim() || "你好，请做个简单的自我介绍";
+            const testResult = document.getElementById('test-result');
+            const resultPre = testResult.querySelector('pre');
+            
+            let apiKey = '';
+            let endpoint = '';
+            
+            switch(provider) {
+                case 'aliyun':
+                    apiKey = document.getElementById('aliyun-api-key').value;
+                    endpoint = '/api/test/aliyun';
+                    break;
+                case 'guiji':
+                    apiKey = document.getElementById('guiji-api-key').value;
+                    endpoint = '/api/test/guiji';
+                    break;
+                case 'google':
+                    apiKey = document.getElementById('google-api-key').value;
+                    endpoint = '/api/test/google';
+                    break;
+            }
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        test_input: testInput
+                    })
+                });
+
+                const data = await response.json();
+                
+                testResult.classList.remove('hidden');
+                if (response.ok) {
+                    resultPre.textContent = JSON.stringify(data, null, 2);
+                    resultPre.className = 'whitespace-pre-wrap text-green-700';
+                } else {
+                    resultPre.textContent = `测试失败：${data.error || '未知错误'}`;
+                    resultPre.className = 'whitespace-pre-wrap text-red-700';
+                }
+            } catch (error) {
+                testResult.classList.remove('hidden');
+                resultPre.textContent = `测试出错：${error.message}`;
+                resultPre.className = 'whitespace-pre-wrap text-red-700';
+            }
+        }
+
+        document.getElementById('api-settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                aliyun_api_key: document.getElementById('aliyun-api-key').value,
+                aliyun_model: document.getElementById('aliyun-model').value,
+                guiji_api_key: document.getElementById('guiji-api-key').value,
+                google_api_key: document.getElementById('google-api-key').value
+            };
+
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('设置已成功保存！');
+                } else {
+                    showMessage(data.message || '保存设置失败', true);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('保存设置时发生错误', true);
+            }
+        });
+    </script>
+</body>
+</html>
