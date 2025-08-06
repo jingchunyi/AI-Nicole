@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentGroup = null;
     let currentTopic = null;
-    let eventSource = null;
+    let currentController = null; // 用于取消请求
     let sessionId = `session_${new Date().getTime()}`;
+    let editingGroup = null; // 当前正在编辑的群组
 
     async function loadAssistants() {
         try {
@@ -201,6 +202,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentAssistantElement = null;
         let currentSpeakerName = null;
         let assistantResponse = '';
+        let allAssistantResponses = []; // 存储所有助手的回复内容
+
+        // 创建AbortController用于取消请求
+        currentController = new AbortController();
 
         try {
             const response = await fetch('/api/group_chat', {
@@ -213,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     topic_id: currentTopic.id,
                     session_id: sessionId
                 }),
+                signal: currentController.signal
             });
 
             if (!response.ok) {
@@ -234,6 +240,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (line.startsWith('data: ')) {
                         const jsonStr = line.slice(6);
                         if (jsonStr.trim() === '[DONE_GROUP]') {
+                            // 重置控制器和界面状态
+                            currentController = null;
+                            messageInput.disabled = false;
                             sendButton.disabled = false;
                             stopButton.classList.add('hidden');
                             break;
@@ -264,6 +273,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // 助手开始说话
                             if (data.type === 'assistant_start') {
+                                // 如果有之前的回复，保存到数组中
+                                if (currentSpeakerName && assistantResponse.trim()) {
+                                    allAssistantResponses.push({
+                                        name: currentSpeakerName,
+                                        content: assistantResponse.trim()
+                                    });
+                                }
+                                
                                 currentSpeakerName = data.speaker_name;
                                 assistantResponse = '';
                                 currentAssistantElement = renderAssistantMessage(
@@ -291,27 +308,62 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } catch (error) {
-            console.error('Error sending message:', error);
-            // 显示错误消息
-            const errorElement = document.createElement('div');
-            errorElement.className = 'mb-4';
-            errorElement.innerHTML = `
-                <div class="flex items-start">
-                    <div class="w-8 h-8 rounded-full bg-red-200 flex items-center justify-center mr-3 flex-shrink-0">⚠️</div>
-                    <div class="flex flex-col items-start">
-                        <div class="font-medium text-sm text-red-600 mb-1">发送失败</div>
-                        <div class="max-w-md p-3 rounded-lg bg-red-50 text-red-700">
-                            发送消息失败，请重试
+            if (error.name === 'AbortError') {
+                console.log('群组对话被用户停止');
+                
+                // 保存当前正在进行的助手回复
+                if (currentSpeakerName && assistantResponse.trim()) {
+                    allAssistantResponses.push({
+                        name: currentSpeakerName,
+                        content: assistantResponse.trim()
+                    });
+                }
+                
+                // 如果有部分回复，保存到数据库
+                if (allAssistantResponses.length > 0) {
+                    savePartialGroupResponses(allAssistantResponses);
+                }
+                
+                // 显示停止消息
+                const stopElement = document.createElement('div');
+                stopElement.className = 'mb-4';
+                stopElement.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center mr-3 flex-shrink-0">⏹️</div>
+                        <div class="flex flex-col items-start">
+                            <div class="font-medium text-sm text-yellow-600 mb-1">对话已停止</div>
+                            <div class="max-w-md p-3 rounded-lg bg-yellow-50 text-yellow-700">
+                                群组对话已被用户停止${allAssistantResponses.length > 0 ? '，部分回复已保存' : ''}
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            chatMessages.appendChild(errorElement);
+                `;
+                chatMessages.appendChild(stopElement);
+            } else {
+                console.error('Error sending message:', error);
+                // 显示错误消息
+                const errorElement = document.createElement('div');
+                errorElement.className = 'mb-4';
+                errorElement.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 rounded-full bg-red-200 flex items-center justify-center mr-3 flex-shrink-0">⚠️</div>
+                        <div class="flex flex-col items-start">
+                            <div class="font-medium text-sm text-red-600 mb-1">发送失败</div>
+                            <div class="max-w-md p-3 rounded-lg bg-red-50 text-red-700">
+                                发送消息失败，请重试
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(errorElement);
+            }
         } finally {
             // 恢复界面状态
+            currentController = null;
             messageInput.disabled = false;
             sendButton.disabled = false;
             stopButton.classList.add('hidden');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
 
@@ -333,6 +385,32 @@ document.addEventListener('DOMContentLoaded', () => {
         
         chatMessages.appendChild(messageElement);
         return messageElement;
+    }
+
+    // 保存部分群组回复
+    async function savePartialGroupResponses(responses) {
+        if (!currentTopic || responses.length === 0) return;
+        
+        try {
+            for (const response of responses) {
+                const saveData = {
+                    topic_id: currentTopic.id,
+                    session_id: sessionId,
+                    content: `[${response.name}]: ${response.content}`
+                };
+                
+                await fetch('/api/save-partial-response', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(saveData)
+                });
+            }
+            console.log('部分群组回复已保存');
+        } catch (error) {
+            console.error('保存部分回复失败:', error);
+        }
     }
 
     newGroupBtn.addEventListener('click', () => {
@@ -396,12 +474,127 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    stopButton.addEventListener('click', () => {
-        if (eventSource) {
-            eventSource.close();
+    // 停止AI响应
+    function stopGroupChat() {
+        if (currentController) {
+            currentController.abort();
+            currentController = null;
+            console.log('群组对话已被用户停止');
         }
+        // 立即恢复界面状态
+        messageInput.disabled = false;
         sendButton.disabled = false;
         stopButton.classList.add('hidden');
+        messageInput.focus();
+    }
+    
+    stopButton.addEventListener('click', stopGroupChat);
+
+    // 群组编辑相关功能
+    const editGroupBtn = document.getElementById('edit-group-btn');
+    const editGroupModal = document.getElementById('edit-group-modal');
+    const closeEditGroupModal = document.getElementById('close-edit-group-modal');
+    const cancelEditGroupBtn = document.getElementById('cancel-edit-group-btn');
+    const saveGroupBtn = document.getElementById('save-group-btn');
+    const editGroupNameInput = document.getElementById('edit-group-name-input');
+    const editGroupDescriptionInput = document.getElementById('edit-group-description-input');
+
+    // 显示编辑群组模态框
+    function showEditGroupModal() {
+        if (!currentGroup) return;
+        
+        editingGroup = currentGroup;
+        editGroupNameInput.value = currentGroup.name;
+        editGroupDescriptionInput.value = currentGroup.description || '';
+        editGroupModal.classList.remove('hidden');
+        
+        // 聚焦到名称输入框
+        setTimeout(() => {
+            editGroupNameInput.focus();
+            editGroupNameInput.select();
+        }, 100);
+    }
+
+    // 隐藏编辑群组模态框
+    function hideEditGroupModal() {
+        editGroupModal.classList.add('hidden');
+        editingGroup = null;
+        editGroupNameInput.value = '';
+        editGroupDescriptionInput.value = '';
+    }
+
+    // 保存群组更改
+    async function saveGroupChanges() {
+        if (!editingGroup) return;
+        
+        const name = editGroupNameInput.value.trim();
+        const description = editGroupDescriptionInput.value.trim();
+        
+        if (!name) {
+            alert('群组名称不能为空');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/groups/${editingGroup.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    description: description
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                
+                // 更新当前群组信息
+                if (currentGroup && currentGroup.id === editingGroup.id) {
+                    currentGroup = result.group;
+                    updateGroupHeader(currentGroup);
+                }
+                
+                // 重新加载群组列表
+                await loadGroups();
+                
+                // 隐藏模态框
+                hideEditGroupModal();
+                
+                alert('群组更新成功');
+            } else {
+                const error = await response.json();
+                alert(error.error || '更新失败');
+            }
+        } catch (error) {
+            console.error('更新群组失败:', error);
+            alert('更新群组失败，请重试');
+        }
+    }
+
+    // 编辑按钮事件
+    editGroupBtn.addEventListener('click', showEditGroupModal);
+
+    // 关闭模态框事件
+    closeEditGroupModal.addEventListener('click', hideEditGroupModal);
+    cancelEditGroupBtn.addEventListener('click', hideEditGroupModal);
+
+    // 保存按钮事件
+    saveGroupBtn.addEventListener('click', saveGroupChanges);
+
+    // 回车保存
+    editGroupNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            saveGroupChanges();
+        }
+    });
+
+    // 点击模态框外部关闭
+    editGroupModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideEditGroupModal();
+        }
     });
 
     // 初始化

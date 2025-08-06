@@ -30,8 +30,7 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     aliyun_api_key = db.Column(db.String(200))
     aliyun_model = db.Column(db.String(50), default='qwen-plus')
-    guiji_api_key = db.Column(db.String(200))
-    google_api_key = db.Column(db.String(200))
+
 
 class Topic(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -92,9 +91,7 @@ with app.app_context():
     if not Settings.query.first():
         default_settings = Settings(
             aliyun_api_key='sk-044b96708e89453787a9033ab9c6bf33',
-            aliyun_model='qwen-plus',
-            guiji_api_key='sk-bbkkyosdmrmefanavzozynuiitttznnqyeaeigstehknjtyo',
-            google_api_key='AIzaSyChFtVe6nPHW5nT9J6i8QBXbka5LJVKVko'
+            aliyun_model='qwen-plus'
         )
         db.session.add(default_settings)
         db.session.commit()
@@ -148,42 +145,7 @@ def test_aliyun_api(api_key, test_input):
     
     return response.json()
 
-def test_guiji_api(api_key, test_input):
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "messages": [
-            {
-                "role": "user",
-                "content": test_input
-            }
-        ]
-    }
-    
-    response = requests.post(
-        "https://api.guiji.ai/v1/chat/completions",
-        headers=headers,
-        json=data
-    )
-    
-    return response.json()
 
-def test_google_search(api_key, query):
-    params = {
-        'key': api_key,
-        'cx': '017576662512468239146:omuauf_lfve',
-        'q': query
-    }
-    
-    response = requests.get(
-        'https://www.googleapis.com/customsearch/v1',
-        params=params
-    )
-    
-    return response.json()
 
 @app.route('/')
 def index():
@@ -200,9 +162,7 @@ def settings():
     current_settings = get_settings()
     return render_template('settings.html', 
                          aliyun_api_key=current_settings.aliyun_api_key,
-                         aliyun_model=current_settings.aliyun_model,
-                         guiji_api_key=current_settings.guiji_api_key,
-                         google_api_key=current_settings.google_api_key)
+                         aliyun_model=current_settings.aliyun_model)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
@@ -281,10 +241,7 @@ def update_settings():
             settings.aliyun_api_key = data['aliyun_api_key']
         if 'aliyun_model' in data:
             settings.aliyun_model = data['aliyun_model']
-        if 'guiji_api_key' in data:
-            settings.guiji_api_key = data['guiji_api_key']
-        if 'google_api_key' in data:
-            settings.google_api_key = data['google_api_key']
+
         
         db.session.commit()
         return jsonify({"status": "success", "message": "设置已更新"})
@@ -306,35 +263,7 @@ def test_aliyun():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/test/guiji', methods=['POST'])
-def test_guiji():
-    try:
-        data = request.json
-        api_key = data.get('api_key')
-        test_input = data.get('test_input', '你好，请做个简单的自我介绍')
-        
-        if not api_key:
-            return jsonify({"error": "API密钥不能为空"}), 400
-            
-        result = test_guiji_api(api_key, test_input)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-@app.route('/api/test/google', methods=['POST'])
-def test_google():
-    try:
-        data = request.json
-        api_key = data.get('api_key')
-        test_input = data.get('test_input', 'Hello World')
-        
-        if not api_key:
-            return jsonify({"error": "API密钥不能为空"}), 400
-            
-        result = test_google_search(api_key, test_input)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -352,18 +281,29 @@ def chat():
         if not settings.aliyun_api_key:
             return jsonify({"error": "请先在设置页面配置API密钥"}), 400
 
-        # 构建消息历史
+        # 构建消息历史，包含对话上下文
         role_prompt = get_role_prompt(role)
         messages = [
             {
                 "role": "system",
                 "content": role_prompt
-            },
-            {
-                "role": "user",
-                "content": message
             }
         ]
+        
+        # 添加最近的对话历史作为上下文
+        if topic_id:
+            recent_conversations = get_recent_conversations(topic_id, session_id, limit=10)
+            for conv in recent_conversations:
+                messages.append({
+                    "role": conv.role,
+                    "content": conv.content
+                })
+        
+        # 添加当前用户消息
+        messages.append({
+            "role": "user",
+            "content": message
+        })
 
         # 保存用户消息到数据库
         new_message = Conversation(
@@ -444,6 +384,7 @@ def update_role():
     try:
         data = request.json
         role_key = data.get('role')
+        name = data.get('name')
         description = data.get('description')
         prompt = data.get('prompt')
         
@@ -454,6 +395,13 @@ def update_role():
         assistant = Assistant.query.filter_by(role_key=role_key).first()
         if not assistant:
             return jsonify({"error": "Assistant not found"}), 404
+        
+        # 更新助手信息
+        if name and name.strip():
+            assistant.name = name.strip()
+        if description is not None:
+            assistant.description = description.strip() if description else None
+        assistant.updated_at = datetime.utcnow()
         
         # 查找或创建角色prompt记录
         role_prompt = RolePrompt.query.filter_by(role_key=role_key).first()
@@ -515,6 +463,22 @@ def get_role_prompt(role_key):
         return f'你是{assistant.name}，{assistant.description or "一个专业的AI助手"}。请根据用户的问题提供专业、准确、有用的回答。'
     
     return ''
+
+
+
+def get_recent_conversations(topic_id, session_id, limit=10):
+    """获取最近的对话记录"""
+    try:
+        conversations = Conversation.query.filter(
+            Conversation.topic_id == topic_id,
+            Conversation.session_id == session_id
+        ).order_by(Conversation.timestamp.desc()).limit(limit).all()
+        
+        # 按时间正序返回，以便构建正确的对话上下文
+        return list(reversed(conversations))
+    except Exception as e:
+        print(f"Error getting recent conversations: {e}")
+        return []
 
 def allowed_file(filename):
     """检查文件扩展名是否允许"""
@@ -585,6 +549,8 @@ def save_complete_response():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
 @app.route('/api/upload-files', methods=['POST'])
 def upload_files():
     """处理文件上传"""
@@ -628,7 +594,7 @@ def upload_files():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/topics/<int:topic_id>', methods=['PUT'])
+@app.route('/api/topics/<topic_id>', methods=['PUT'])
 def update_topic(topic_id):
     """更新话题信息"""
     try:
@@ -891,6 +857,77 @@ def create_group():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/groups/<int:group_id>', methods=['PUT'])
+def update_group(group_id):
+    """更新群组信息"""
+    try:
+        data = request.get_json()
+        name = data.get('name', '').strip()
+        description = data.get('description', '').strip()
+        
+        if not name:
+            return jsonify({"error": "群组名称不能为空"}), 400
+        
+        # 查找群组
+        group = Group.query.get(group_id)
+        if not group:
+            return jsonify({"error": "群组不存在"}), 404
+        
+        # 检查群组名称是否重复（排除自己）
+        existing_group = Group.query.filter(Group.name == name, Group.id != group_id).first()
+        if existing_group:
+            return jsonify({"error": "群组名称已存在"}), 400
+        
+        # 保存旧名称，用于更新相关话题
+        old_name = group.name
+        
+        # 更新群组信息
+        group.name = name
+        group.description = description
+        group.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        # 如果群组名称改变了，需要更新对应的话题标题
+        if old_name != name:
+            try:
+                existing_topic = Topic.query.filter_by(title=f"群组:{old_name}", role='group').first()
+                if existing_topic:
+                    existing_topic.title = f"群组:{name}"
+                    existing_topic.updated_at = datetime.utcnow()
+                    db.session.commit()
+            except Exception as e:
+                print(f"Failed to update group topic title: {e}")
+        
+        # 获取群组的助手信息
+        assistants_data = []
+        for assistant in group.assistants:
+            assistants_data.append({
+                'id': assistant.id,
+                'name': assistant.name,
+                'description': assistant.description,
+                'avatar': assistant.avatar,
+                'avatar_type': assistant.avatar_type,
+                'role_key': assistant.role_key
+            })
+        
+        return jsonify({
+            "status": "success",
+            "message": "群组更新成功",
+            "group": {
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "created_at": group.created_at.isoformat(),
+                "updated_at": group.updated_at.isoformat(),
+                "assistants": assistants_data
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/groups/<int:group_id>/topic', methods=['GET'])
 def get_or_create_group_topic(group_id):
     """为群组获取或创建对应的话题"""
@@ -1020,17 +1057,30 @@ def group_chat():
                         # 使用预加载的角色设定
                         role_prompt = assistant_data.get('role_prompt', f'你是{assistant_data["name"]}，一个专业的AI助手。')
                         
-                        # 构建消息
+                        # 构建系统提示
+                        system_content = f"{role_prompt}\n\n你现在参与一个群组讨论，群组名称是'{group_name}'。请以你的专业角色身份参与讨论，提供有价值的观点。"
+                        
+                        # 构建消息，包含对话历史
                         messages = [
                             {
                                 "role": "system",
-                                "content": f"{role_prompt}\n\n你现在参与一个群组讨论，群组名称是'{group_name}'。请以你的专业角色身份参与讨论，提供有价值的观点。"
-                            },
-                            {
-                                "role": "user",
-                                "content": message
+                                "content": system_content
                             }
                         ]
+                        
+                        # 添加最近的对话历史作为上下文（群组聊天使用较少的历史记录）
+                        recent_conversations = get_recent_conversations(topic_id, session_id, limit=6)
+                        for conv in recent_conversations:
+                            messages.append({
+                                "role": conv.role,
+                                "content": conv.content
+                            })
+                        
+                        # 添加当前用户消息
+                        messages.append({
+                            "role": "user",
+                            "content": message
+                        })
 
                         headers = {
                             "Authorization": f"Bearer {aliyun_api_key}",

@@ -109,8 +109,14 @@ function hideEditPromptModal() {
 
 // 保存角色prompt
 async function saveRolePrompt() {
+    const name = document.getElementById('edit-role-name').value.trim();
     const description = document.getElementById('edit-role-desc').value.trim();
     const prompt = document.getElementById('edit-role-prompt').value.trim();
+    
+    if (!name) {
+        alert('请输入角色名称');
+        return;
+    }
     
     if (!prompt) {
         alert('请输入角色prompt');
@@ -125,6 +131,7 @@ async function saveRolePrompt() {
             },
             body: JSON.stringify({
                 role: currentRole,
+                name: name,
                 description: description,
                 prompt: prompt
             })
@@ -132,6 +139,7 @@ async function saveRolePrompt() {
         
         if (response.ok) {
             // 更新本地数据
+            roleMap[currentRole].name = name;
             roleMap[currentRole].description = description;
             roleMap[currentRole].prompt = prompt;
             
@@ -140,8 +148,14 @@ async function saveRolePrompt() {
             hideEditPromptModal();
             
             alert('角色设定已保存');
+            
+            // 刷新页面以更新左侧助手列表中的名称
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
-            alert('保存失败，请重试');
+            const errorData = await response.json();
+            alert(errorData.error || '保存失败，请重试');
         }
     } catch (error) {
         console.error('保存角色设定失败:', error);
